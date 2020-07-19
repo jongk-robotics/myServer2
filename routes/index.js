@@ -8,12 +8,36 @@ module.exports = function(app, UserInfo)
         })
     });
 
+    app.get('/api/phoneBook/:user_id', function(req, res){
+        UserInfo.findOne({user_id: req.params.user_id}, function(err, user){
+            if(err) return res.status(500).json({error: err});
+            if(!user) return res.status(404).json({error: 'user not found'});
+            res.json(user.phoneBook);
+        })
+    });
+
     app.get('/api/userall', function(req, res){
         UserInfo.find(function(err, contacts){
         if(err) return res.status(500).send({error: 'database failure'});
             res.json(contacts);
         })
     });
+
+    // app.post('/api/phoneBook', function(req, res){
+        
+    //     id = req.body.user_id;
+    //     phoneBook = req.body.phoneBook;
+
+    //     console.log("id: " + id);
+
+    //     UserInfo.update({ user_id: id}, {$push: {phoneBook: {$each: phoneBook}}}, function(err, user){
+    //         if(err) return res.status(500).json({ error: "database failure" });
+    //         if(!user) return res.status(404).json({error: 'user not found'});
+            
+    //         res.json({result: 1});
+            
+    //     })
+    // });
 
     app.post('/api/phoneBook', function(req, res){
         
@@ -22,13 +46,21 @@ module.exports = function(app, UserInfo)
 
         console.log("id: " + id);
 
-        UserInfo.update({ user_id: id}, {$push: {phoneBook: {$each: phoneBook}}}, function(err, user){
-            if(err) return res.status(500).json({ error: "database failure" });
+        UserInfo.findOne({$and: [{name: phoneBook.name}, {number: phoneBook.number}]}, function(err, user){
+            if(err) return res.status(500).json({error: err});
             if(!user) return res.status(404).json({error: 'user not found'});
+
+            if(user !== null){
+                UserInfo.update({ user_id: id}, {phoneBook: phoneBook}, function(err, user){
+                    if(err) return res.status(500).json({ error: "database failure" });
+                    if(!user) return res.status(404).json({error: 'user not found'});
+                    
+                })
+            }
             
             res.json({result: 1});
-            
         })
+        
     });
 
     app.post('/api/gallery', function(req, res){
