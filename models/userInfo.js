@@ -6,9 +6,7 @@ var userInfoSchema = new Schema({
     phoneBook: [{
         name: String,
         number: String
-    }],
-    gallery: [{path: String}]
-
+    }]
 });
 
 module.exports = mongoose.model('userInfo', userInfoSchema);

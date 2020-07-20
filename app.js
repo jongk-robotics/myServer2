@@ -5,6 +5,10 @@ var express     = require('express');
 var app         = express();
 var bodyParser  = require('body-parser');
 var mongoose    = require('mongoose');
+var multer  = require('multer');
+var fs = require('fs');
+var path = require('path');
+var crypto = require('crypto');
 
 // [ CONFIGURE mongoose ]
 
@@ -20,6 +24,7 @@ mongoose.connect('mongodb://localhost/my_mongodb');
 
 // DEFINE MODEL
 var UserInfo = require('./models/userInfo');
+var GroupInfo = require('./models/groupInfo');
 
 // [CONFIGURE APP TO USE bodyParser]
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -29,8 +34,24 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080;
 
+storage = multer.diskStorage({
+    destination: './uploads/',
+    filename: function(req, file, cb) {
+      return crypto.pseudoRandomBytes(16, function(err, raw) {
+        if (err) {
+          return cb(err);
+        }
+        return cb(null, "" + (raw.toString('hex')) + (path.extname(file.originalname)));
+      });
+    }
+  });
+
+var upload = multer({ storage: storage });
+
+
+
 // [CONFIGURE ROUTER]
-var router = require('./routes')(app, UserInfo);
+var router = require('./routes')(app, UserInfo, GroupInfo, upload, fs);
 
 // [RUN SERVER]
 var server = app.listen(80, function(){
