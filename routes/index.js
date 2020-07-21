@@ -167,12 +167,20 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
                 res.json({result: 0, error: "already exists"});
             }
         })
+
+        
     });
 
     app.get('/api/groupall', function(req, res){
         GroupInfo.find(function(err, groups){
             if(err) return res.status(500).send({error: 'database failure'});
             res.json(groups);
+        })
+    });
+    app.get('/api/groupNamesAll', function(req, res){
+        GroupInfo.find({}, 'group_name', function(err, names){
+            if(err) return res.status(500).send({error: 'database failure'});
+            res.json(names);
         })
     });
 
@@ -183,29 +191,109 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
         })
     });
 
-    app.post('/upload', upload.single('productImg'), async (req, res, next) => {
-        try {
-          console.log(req.file);
-          console.log(req.body.text);
-          res.redirect("/uploads/" + req.file.filename);
-        } catch (e) {
-          next(e);
-        }
+    app.post('/api/upload', upload.single('productImg'), async (req, res, next) => {
+        
+        group_name = req.body.group_name;
+        file_name = req.file.filename;
+
+
+        console.log("group_name: " + group_name);
+        console.log("file_name: " + file_name);
+
+        res.json({file_name: file_name});
+
+        // try {
+        //     res.redirect('api/uploads/'+req.file.filename)
+        // } catch (e) {
+        //   next(e);
+        // }
+
+        // GroupInfo.remove({}, function(err, user){
+        //     console.log("ind b");
+        //     if(err) return res.status(500).json({error: err});
+        //     if(!user) return res.status(404).json({error: 'group not found'});
+
+
+        //     // GroupInfo.update({ group_name: group_name}, {$push: {memoBook: {fileName: file_name}}}, function(err, user){
+        //     //     if(err) return res.status(500).json({ error: "database failure" });
+        //     //     if(!user) return res.status(404).json({error: 'user not found'});
+                
+                
+        //     // })
+            
+
+        //     res.json({result: 1});
+        // })
+
+        
+
+        // res.status(200).end();
       });
 
-      app.get('/uploads/:upload', function (req, res){
-        file = req.params.upload;
-        console.log(req.params.upload);
-        var img = fs.readFileSync(__dirname + "/../uploads/" + file);
-        res.writeHead(200, {'Content-Type': 'image/png' });
-        res.end(img, 'binary');
+      app.post('/api/memoBook', function (req, res){
+
+        group_name = req.body.group_name;
+        file_name = req.body.file_name;
+
+        console.log("group_name: " + group_name);
+        console.log("file_name: " + file_name);
+        
+
+        GroupInfo.update({group_name: group_name}, {$push: {memoBook: {file_name: file_name}}}, function(err, user){
+            console.log("ind b");
+            if(err) return res.status(500).json({error: err});
+            if(!user) return res.status(404).json({error: 'group not found'});
+
+
+            // GroupInfo.update({ group_name: group_name}, {$push: {memoBook: {fileName: file_name}}}, function(err, user){
+            //     if(err) return res.status(500).json({ error: "database failure" });
+            //     if(!user) return res.status(404).json({error: 'user not found'});
+                
+                
+            // })
+            
+
+            res.json({result: 1});
+        })
       
       });
 
+      app.get('/api/memoBook/:group_name', function(req, res){
+        GroupInfo.findOne({group_name: req.params.group_name}, function(err, group){
+            if(err) return res.status(500).json({error: err});
+            if(!group) return res.status(404).json({error: 'user not found'});
+            res.json(group.memoBook);
+        })
+    });
+
+      
+
+    //   app.get('/uploads/:upload', function (req, res){
+    //     file = req.params.upload;
+    //     console.log(req.params.upload);
+    //     var img = fs.readFileSync(__dirname + "/../uploads/" + file);
+
+        
+
+    //     res.writeHead(200, {'Content-Type': 'image/png' });
+    //     res.end(img, 'binary');
+      
+    //   });
+
       app.get("/download/:download", function(req, res){
         file = req.params.download;
-        var filename = __dirname + "/../uploads/" + file;
-        // log.console(filename);
+
+        console.log("rawfile: " + file);
+
+        var filename = __dirname + "/../uploads/";
+
+        var jbSplit = file.split('+', 2);
+        
+        filename = filename + jbSplit[0] + "/" + jbSplit[1];
+        
+
+        console.log("file: " + filename);
+
         fs.readFile(filename,              //파일 읽기
           function (err, data)
           {

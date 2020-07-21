@@ -9,6 +9,7 @@ var multer  = require('multer');
 var fs = require('fs');
 var path = require('path');
 var crypto = require('crypto');
+var mkdirp = require('mkdirp');
 
 // [ CONFIGURE mongoose ]
 
@@ -25,6 +26,7 @@ mongoose.connect('mongodb://localhost/my_mongodb');
 // DEFINE MODEL
 var UserInfo = require('./models/userInfo');
 var GroupInfo = require('./models/groupInfo');
+const { json } = require('body-parser');
 
 // [CONFIGURE APP TO USE bodyParser]
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -35,7 +37,14 @@ app.use(bodyParser.json());
 var port = process.env.PORT || 8080;
 
 storage = multer.diskStorage({
-    destination: './uploads/',
+    destination: function (req, file, cb) {
+        var dest = 'uploads/' + req.body.group_name.toString().replace(/"/g, "") + "/";
+        mkdirp.sync(dest);
+
+      
+
+        cb(null, dest);
+      },
     filename: function(req, file, cb) {
       return crypto.pseudoRandomBytes(16, function(err, raw) {
         if (err) {
