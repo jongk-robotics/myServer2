@@ -80,6 +80,7 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
     app.post('/api/user', function(req, res){
         
         id = req.body.user_id;
+        phone_number = req.body.phone_number;
         phoneBook = req.body.phoneBook;
 
         console.log("id: " + id);
@@ -89,6 +90,7 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
             if(!user){
                 var added_user = new UserInfo();
                 added_user.user_id = id;
+                added_user.phone_number = phone_number;
                 added_user.phoneBook = phoneBook;
 
                 added_user.save(function(err){
@@ -234,12 +236,14 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
 
         group_name = req.body.group_name;
         file_name = req.body.file_name;
+        likes = "0";
 
         console.log("group_name: " + group_name);
         console.log("file_name: " + file_name);
+        console.log("likes: " + likes);
         
 
-        GroupInfo.update({group_name: group_name}, {$push: {memoBook: {file_name: file_name}}}, function(err, user){
+        GroupInfo.update({group_name: group_name}, {$push: {memoBook: {file_name: file_name, likes: likes}}}, function(err, user){
             console.log("ind b");
             if(err) return res.status(500).json({error: err});
             if(!user) return res.status(404).json({error: 'group not found'});
@@ -265,6 +269,36 @@ module.exports = function(app, UserInfo, GroupInfo, upload, fs)
             res.json(group.memoBook);
         })
     });
+
+    app.post('/api/memoBookLikesUpdate', function(req, res){
+        group_name = req.body.group_name;
+        file_name = req.body.file_name;
+        likes = req.body.likes;
+
+        GroupInfo.update({'group_name': group_name, 'memoBook.file_name': file_name}, {'$set': {
+            'memoBook.$.likes': likes
+        }}, function(err){
+            console.log(err)
+        })
+
+        res.status(200).end();
+
+    });
+
+    // app.get('/api/memoBookLikes', function(req, res){
+    //     group_name = req.body.group_name;
+    //     file_name = req.body.file_name;
+    //     likes = req.body.likes;
+
+    //     GroupInfo.findOne({'group_name': group_name, 'memoBook.file_name': file_name}, {'$set': {
+    //         'memoBook.$.likes': likes
+    //     }}, function(err){
+    //         console.log(err)
+    //     })
+
+    //     res.status(200).end();
+
+    // });
 
       
 
